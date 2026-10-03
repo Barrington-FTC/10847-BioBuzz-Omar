@@ -1,17 +1,17 @@
 package org.firstinspires.ftc.teamcode.Experimentation.FlywheelAdvanced;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.bylazar.ftcontrol.panels.Panels;
+import com.bylazar.ftcontrol.panels.integration.TelemetryManager; // Updated Telemetry import
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@Config
 @TeleOp(name = "kPTuner")
 public class kPTuner extends OpMode {
 
     Flywheel flywheel = new Flywheel();
 
+    // Changed type from PanelsTelemetry to TelemetryManager
+    private TelemetryManager panelsTelemetry;
 
     public double kS = 0.065;
     public double kV = 0.000116096;
@@ -22,7 +22,9 @@ public class kPTuner extends OpMode {
     @Override
     public void init() {
         flywheel.init(hardwareMap);
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+        // If Panels.getTelemetry() still shows red, change to Panels.INSTANCE.getTelemetry();
+        panelsTelemetry = Panels.getTelemetry();
     }
 
     @Override
@@ -36,11 +38,14 @@ public class kPTuner extends OpMode {
         double power = feedForward + feedBack;
 
         flywheel.setFlywheelPower(power);
-        telemetry.addData("kP", "%.6f", kP);
-        telemetry.addData("Error", error);
-        telemetry.addData("RPM", "%.1f", flywheel.getRPM());
-        telemetry.addData("Ticks Per Second", flywheel.getTicksPerSec());
 
-        telemetry.update();
+        // Send telemetry to Panels UI (http://192.168.43.1:8001)
+        panelsTelemetry.debug("kP", String.format("%.6f", kP));
+        panelsTelemetry.debug("Error", String.format("%.2f", error));
+        panelsTelemetry.debug("RPM", String.format("%.1f", flywheel.getRPM()));
+        panelsTelemetry.debug("Ticks Per Second", flywheel.getTicksPerSec());
+
+        // Update both Panels Dashboard and Driver Station
+        panelsTelemetry.update(telemetry);
     }
 }
